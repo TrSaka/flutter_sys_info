@@ -7,6 +7,14 @@ class MethodChannelFlutterSysInfo extends FlutterSysInfoPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('flutter_sys_info');
 
+
+  @override
+  Future<String?> getBatteryTemperature() async {
+    final version =
+        await methodChannel.invokeMethod<int>('getBatteryTemperature');
+    return version.toString();
+  }
+
   @override
   Future<String?> getPlatformVersion() async {
     final version =

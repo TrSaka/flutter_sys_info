@@ -2,9 +2,7 @@ package com.example.flutter_sys_info
 
 import androidx.annotation.NonNull
 import android.content.Context
-import android.os.BatteryManager
-import android.os.StatFs
-import android.os.Environment
+
 
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -32,65 +30,36 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
   override fun onMethodCall(call: MethodCall, result: Result) {
 
     when (call.method){
-      "getPlatformVersion" -> {
-        result.success("Android ${android.os.Build.VERSION.RELEASE}")
-      }
+
+      //HARDWARE
+
+      "getPlatformVersion" -> HardwareInfo.getPlatformVersion(result)
     
-      "getBatteryLevel" -> {
-        val batteryLevel = getBatteryLevel()
-        if(batteryLevel != -1){
-          result.success(batteryLevel)
-        }else{
-          result.error("UNAVAILABLE", "Battery level not available.", null)
-        }
-      }
+      "getBatteryLevel" -> HardwareInfo.getBatteryLevel(context, result)
+
+      "getDeviceModel"-> HardwareInfo.getDeviceModel(result)
+
+      "getSdkVersion"-> HardwareInfo.getSdkVersion(result)
+
+      "getTotalMemory"-> HardwareInfo.getTotalMemory(context, result)
+
+      "getStorageInfo"-> HardwareInfo.getStorageInfo(context, result)
+
+      "getBatteryTemperature"-> HardwareInfo.getBatteryTemperature(context,result)
 
 
-      "getDeviceModel"->{
-        val deviceModel = android.os.Build.MODEL
-        result.success(deviceModel)
-      }
+      //NETWORK
 
-      "getSdkVersion"->{
-        val sdkVersion = android.os.Build.VERSION.SDK_INT
-        result.success(sdkVersion)
-      }
-
-      "getTotalMemory"->{
-        val memoryInfo = android.app.ActivityManager.MemoryInfo()
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-        activityManager.getMemoryInfo(memoryInfo)
-        result.success(memoryInfo.totalMem)
-      }
-      "getStorageInfo"->{
-        val externalStorageDir = context.getExternalFilesDir(null)
-        val status = StatFs(externalStorageDir?.absolutePath)
-
-
-        val blockSize = status.blockSizeLong
-        val totalBlocks = status.blockCountLong
-        val availableBlocks = status.availableBlocksLong
-
-        val totalStorage = totalBlocks * blockSize
-        val availableStorage = availableBlocks * blockSize
-        result.success(mapOf("total" to totalStorage, "available" to availableStorage))
-      }
-
-      "getWifiSSID"->{
-        NetworkInfo.getWifiSSID(context, result)
-      }
-      "getWifiBSSID"->{
-        NetworkInfo.getWifiBSSID(context, result)
-      }
-      "getWifiNetworkSpeed"->{
-        NetworkInfo.getWifiNetworkSpeed(context, result)
-      }
-      "getWifiIP"->{
-        NetworkInfo.getWifiIP(context, result)
-      }
-      "getWifiRSSI"->{
-        NetworkInfo.getWifiRSSI(context, result)
-      }
+      "getWifiSSID"-> NetworkInfo.getWifiSSID(context, result)
+      
+      "getWifiBSSID"-> NetworkInfo.getWifiBSSID(context, result)
+      
+      "getWifiNetworkSpeed"-> NetworkInfo.getWifiNetworkSpeed(context, result)
+      
+      "getWifiIP"-> NetworkInfo.getWifiIP(context, result)
+      
+      "getWifiRSSI"-> NetworkInfo.getWifiRSSI(context, result)
+      
 
       else -> {
         result.notImplemented()
@@ -98,10 +67,6 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
     }
   }
 
-  private fun getBatteryLevel():Int{
-    val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-    return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-  }
 
   
 

@@ -25,6 +25,8 @@ class _MyAppState extends State<MyApp> {
   int? wifiNetworkSpeed;
   int? wifiRSSI;
   int? wifiIP;
+  String? batteryTemp;
+  String? cpuTemp;
 
   final _flutterSysInfoPlugin = FlutterSysInfo();
   final _flutterSysInfoNetwork = FlutterSysInfoNetwork();
@@ -68,6 +70,7 @@ class _MyAppState extends State<MyApp> {
     wifiNetworkSpeed = await _flutterSysInfoNetwork.getWifiNetworkSpeed();
     wifiRSSI = await _flutterSysInfoNetwork.getWifiRSSI();
     wifiIP = await _flutterSysInfoNetwork.getWifiIP();
+    batteryTemp = await _flutterSysInfoPlugin.getBatteryTemperature();
 
     debugPrint('Device model: $deviceModel');
     debugPrint('SDK version: $sdkVersion');
@@ -78,6 +81,7 @@ class _MyAppState extends State<MyApp> {
     debugPrint("Wifi network speed: $wifiNetworkSpeed");
     debugPrint("Wifi RSSI: $wifiRSSI");
     debugPrint("Wifi IP: $wifiIP");
+    debugPrint("Battery temperature: $batteryTemp");
 
     setState(() {});
   }
@@ -107,6 +111,7 @@ class _MyAppState extends State<MyApp> {
               Text("Wifi network speed: $wifiNetworkSpeed\n"),
               Text("Wifi RSSI: $wifiRSSI\n"),
               Text("Wifi IP: $wifiIP\n"),
+              Text("Battery temperature: $batteryTemp\n"),
             ],
           ),
         ),

@@ -27,6 +27,13 @@ class FlutterSysInfoNetwork {
 }
 
 class FlutterSysInfo {
+
+  Future<String?> getBatteryTemperature() {
+    return FlutterSysInfoPlatform.instance.getBatteryTemperature();
+  }
+
+
+
   Future<String?> getPlatformVersion() {
     return FlutterSysInfoPlatform.instance.getPlatformVersion();
   }
