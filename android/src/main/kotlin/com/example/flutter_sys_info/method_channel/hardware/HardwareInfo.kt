@@ -74,7 +74,7 @@ object HardwareInfo{
         val temperature = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
 
         if (temperature != null && temperature != -1) {
-            result.success(temperature / 10) // temperature is in tenths of degree Celsius
+            result.success(temperature / 10.0) // temperature is in tenths of degree Celsius
         } else {
             result.success(null) // Return null if temperature is not available
         }

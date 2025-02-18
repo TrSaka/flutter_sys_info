@@ -9,10 +9,10 @@ class MethodChannelFlutterSysInfo extends FlutterSysInfoPlatform {
 
 
   @override
-  Future<String?> getBatteryTemperature() async {
+  Future<double?> getBatteryTemperature() async {
     final version =
-        await methodChannel.invokeMethod<int>('getBatteryTemperature');
-    return version.toString();
+        await methodChannel.invokeMethod<double?>('getBatteryTemperature');
+    return version;
   }
 
   @override

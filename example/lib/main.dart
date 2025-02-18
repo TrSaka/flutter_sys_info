@@ -25,10 +25,11 @@ class _MyAppState extends State<MyApp> {
   int? wifiNetworkSpeed;
   int? wifiRSSI;
   int? wifiIP;
-  String? batteryTemp;
+  double? batteryTemp;
   String? cpuTemp;
 
   Stream? batteryLevelStream;
+  Stream? batteryTemperatureStream;
   Stream? wifiRssiStream;
   Stream? wifiConnectionStream;
 
@@ -81,6 +82,11 @@ class _MyAppState extends State<MyApp> {
       debugPrint('Battery level stream: $event');
     });
 
+    batteryTemperatureStream = _flutterSysInfoPlugin.batteryTemperatureStream;
+    batteryTemperatureStream?.listen((event) {
+      debugPrint('Battery temperature stream: $event');
+    });
+
     wifiRssiStream = _flutterSysInfoPlugin.wifiRssiStream;
     wifiRssiStream?.listen((event) {
       debugPrint('Wifi RSSI stream: $event');
@@ -90,6 +96,7 @@ class _MyAppState extends State<MyApp> {
     wifiConnectionStream?.listen((event) {
       debugPrint('Wifi connection stream: $event');
     });
+
 
     debugPrint('Device model: $deviceModel');
     debugPrint('SDK version: $sdkVersion');
@@ -119,9 +126,15 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              easyStream(batteryLevelStream ?? Stream.empty()),
-              easyStream(wifiRssiStream ?? Stream.empty()),
-              easyStream(wifiConnectionStream ?? Stream.empty()),
+              easyStream(batteryLevelStream ?? Stream.empty(),
+                  "Battery level stream: "),
+              easyStream(
+                  wifiRssiStream ?? Stream.empty(), "Wifi RSSI stream: "),
+              easyStream(wifiConnectionStream ?? Stream.empty(),
+                  "Wifi Connection Stream: "),
+              easyStream(batteryTemperatureStream ?? Stream.empty(),
+                  "Battery temperature stream: "),
+                  
               Text('Running on: $_platformVersion\n'),
               Text("Battery : %$batteryLevel\n"),
               Text("Device model: $deviceModel\n"),
@@ -141,14 +154,14 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  StreamBuilder<dynamic> easyStream(Stream eventStream) {
+  StreamBuilder<dynamic> easyStream(Stream eventStream, String label) {
     return StreamBuilder(
         stream: eventStream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState != ConnectionState.active) {
             return CircularProgressIndicator();
           }
-          return Text(snapshot.data.toString());
+          return Text("$label ${snapshot.data}");
         });
   }
 }

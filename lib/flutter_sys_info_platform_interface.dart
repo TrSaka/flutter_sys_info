@@ -16,7 +16,7 @@ abstract class FlutterSysInfoPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getBatteryTemperature() {
+  Future<double?> getBatteryTemperature() {
     throw UnimplementedError(
         'getBatteryTemperature() has not been implemented.');
   }

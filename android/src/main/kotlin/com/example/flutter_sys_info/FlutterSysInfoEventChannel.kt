@@ -17,6 +17,7 @@ import android.content.IntentFilter
 
 class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandler{
     private var batteryEventSink: EventChannel.EventSink? = null
+    private var batteryTempEventSink: EventChannel.EventSink? = null
     private var wifirRssiEventSink: EventChannel.EventSink? = null
     private var wifiConnectionEventSink: EventChannel.EventSink? = null
 
@@ -59,10 +60,22 @@ class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandle
     }
 
 
-    val batteryStatusReceiver = object: BroadcastReceiver(){
+    private val batteryStatusReceiver = object: BroadcastReceiver(){
         override fun onReceive(context:Context, intent:Intent?){
             val batteryLevel = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL,-1)
             batteryEventSink?.success(batteryLevel)
+        }
+    }
+
+    private val batteryTempReceiver = object: BroadcastReceiver(){
+        override fun onReceive(context:Context, intent:Intent?){
+            val batteryTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,-1)
+            
+            if(batteryTemp != null && batteryTemp != -1){
+                batteryTempEventSink?.success(batteryTemp/10.0)
+            }else{
+                batteryTempEventSink?.error("UNAVAILABLE","Battery temperature is unavailable",null)
+            }
         }
     }
 
@@ -97,6 +110,12 @@ class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandle
                 val wifiAvailableIntentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
                 context.registerReceiver(wifiConnectionReceiver,wifiAvailableIntentFilter)
             }
+
+            "battery_temp_stream"->{
+                batteryTempEventSink = events
+                val batteryTempIntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+                context.registerReceiver(batteryTempReceiver,batteryTempIntentFilter)
+            }
             
             else -> {
                 events?.error("INVALID_ARGUMENT","Not Found",null)
@@ -114,6 +133,15 @@ class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandle
             "wifi_rssi_stream" -> {
                 wifirRssiEventSink = null
                 context.unregisterReceiver(wifiRssiStatusReceiver)
+            }
+            "wifi_connection_stream" -> {
+                wifiConnectionEventSink = null
+                context.unregisterReceiver(wifiConnectionReceiver)
+                context.unregisterReceiver(internetAvailableReceiver)
+            }
+            "battery_temp_stream" -> {
+                batteryTempEventSink = null
+                context.unregisterReceiver(batteryTempReceiver)
             }
         }
     }

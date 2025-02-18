@@ -31,6 +31,7 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var methodHandler: SysInfoMethodHandler
 
   private lateinit var batteryLevelEventChannel: EventChannel
+  private lateinit var batteryTempEventChannel: EventChannel
   private lateinit var wifiRssiEventChannel: EventChannel
   private lateinit var wifiConnectionChannel: EventChannel
   
@@ -47,6 +48,9 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
     batteryLevelEventChannel = EventChannel(flutterPluginBinding.binaryMessenger,"battery_level_stream")
     batteryLevelEventChannel.setStreamHandler(eventHandler)
 
+    batteryTempEventChannel = EventChannel(flutterPluginBinding.binaryMessenger,"battery_temp_stream")
+    batteryTempEventChannel.setStreamHandler(eventHandler)
+
     wifiRssiEventChannel = EventChannel(flutterPluginBinding.binaryMessenger,"wifi_rssi_stream")
     wifiRssiEventChannel.setStreamHandler(eventHandler)
 
@@ -61,7 +65,6 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
   }
 
 
-  
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
