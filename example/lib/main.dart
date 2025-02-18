@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
 
   Stream? batteryLevelStream;
   Stream? wifiRssiStream;
+  Stream? wifiConnectionStream;
 
   final _flutterSysInfoPlugin = FlutterSysInfo();
   final _flutterSysInfoNetwork = FlutterSysInfoNetwork();
@@ -85,6 +86,11 @@ class _MyAppState extends State<MyApp> {
       debugPrint('Wifi RSSI stream: $event');
     });
 
+    wifiConnectionStream = _flutterSysInfoPlugin.wifiConnectionStream;
+    wifiConnectionStream?.listen((event) {
+      debugPrint('Wifi connection stream: $event');
+    });
+
     debugPrint('Device model: $deviceModel');
     debugPrint('SDK version: $sdkVersion');
     debugPrint('Total memory: $totalMemory');
@@ -115,6 +121,7 @@ class _MyAppState extends State<MyApp> {
             children: [
               easyStream(batteryLevelStream ?? Stream.empty()),
               easyStream(wifiRssiStream ?? Stream.empty()),
+              easyStream(wifiConnectionStream ?? Stream.empty()),
               Text('Running on: $_platformVersion\n'),
               Text("Battery : %$batteryLevel\n"),
               Text("Device model: $deviceModel\n"),

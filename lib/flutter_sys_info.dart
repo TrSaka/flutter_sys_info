@@ -33,6 +33,9 @@ class FlutterSysInfo {
 
   static const EventChannel _wifiRssiChannel = EventChannel('wifi_rssi_stream');
 
+  static const EventChannel _wifiConnectionChannel =
+      EventChannel('wifi_connection_stream');
+
   Stream<int> get batteryLevelStream {
     return _batteryChannel
         .receiveBroadcastStream('battery_level_stream')
@@ -43,6 +46,12 @@ class FlutterSysInfo {
     return _wifiRssiChannel
         .receiveBroadcastStream('wifi_rssi_stream')
         .map((event) => event as int);
+  }
+
+  Stream<bool> get wifiConnectionStream {
+    return _wifiConnectionChannel
+        .receiveBroadcastStream('wifi_connection_stream')
+        .map((event) => event as bool);
   }
 
   Future<String?> getBatteryTemperature() {

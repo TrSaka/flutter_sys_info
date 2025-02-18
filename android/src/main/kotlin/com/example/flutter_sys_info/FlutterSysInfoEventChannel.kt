@@ -3,17 +3,52 @@ package com.example.flutter_sys_info
 import android.content.Context
 import android.os.BatteryManager
 
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
+
 
 import io.flutter.plugin.common.EventChannel
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.wifi.WifiManager
 
 
 class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandler{
     private var batteryEventSink: EventChannel.EventSink? = null
     private var wifirRssiEventSink: EventChannel.EventSink? = null
+    private var wifiConnectionEventSink: EventChannel.EventSink? = null
+
+    private var isWifiConnected : Boolean = false
+    private var isInternetAvailable: Boolean = false
+
+    private fun checkInternetConnection(){
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        isInternetAvailable = activeNetwork?.isConnectedOrConnecting == true
+
+    }
+
+
+    private val wifiConnectionReceiver = object: BroadcastReceiver(){
+        override fun onReceive(context:Context, intent:Intent?){
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            val wifiInfo = wifiManager?.connectionInfo
+            isWifiConnected = wifiInfo?.networkId != -1
+
+            checkInternetConnection()
+            wifiConnectionEventSink?.success(isWifiConnected &&isInternetAvailable)
+            
+        }
+    }
+
+    private val internetAvailableReceiver = object: BroadcastReceiver(){
+        override fun onReceive(context:Context, intent:Intent?){
+            checkInternetConnection()
+            wifiConnectionEventSink?.success(isWifiConnected &&isInternetAvailable)
+        }
+    }
     
     private val wifiRssiStatusReceiver = object: BroadcastReceiver(){
         override fun onReceive(context:Context, intent:Intent?){
@@ -51,8 +86,19 @@ class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandle
                 //this intent filter is needed to invoke our boradcast receiver when wifi rssi changed
                 //for more info: https://developer.android.com/reference/android/net/wifi/WifiManager.html#RSSI_CHANGED_ACTION
                 var wifiRssiIntentFilter = IntentFilter(WifiManager.RSSI_CHANGED_ACTION)
-                context.registerReceiver(wifiRssiStatusReceiver,wifiRssiIntentFilter)
-            }else -> {
+                context.registerReceiver(wifiRssiStatusReceiver,wifiRssiIntentFilter)   
+            }
+            
+            "wifi_connection_stream"->{
+                wifiConnectionEventSink = events
+                val wifiConnectionIntentFilter = IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION)
+                context.registerReceiver(wifiConnectionReceiver,wifiConnectionIntentFilter)
+
+                val wifiAvailableIntentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+                context.registerReceiver(wifiConnectionReceiver,wifiAvailableIntentFilter)
+            }
+            
+            else -> {
                 events?.error("INVALID_ARGUMENT","Not Found",null)
             }
         }
