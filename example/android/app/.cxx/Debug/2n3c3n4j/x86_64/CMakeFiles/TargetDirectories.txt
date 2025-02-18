@@ -1,0 +1,2 @@
+/Users/sakastudio/development/projects/flutter_sys_info/example/android/app/.cxx/Debug/2n3c3n4j/x86_64/CMakeFiles/edit_cache.dir
+/Users/sakastudio/development/projects/flutter_sys_info/example/android/app/.cxx/Debug/2n3c3n4j/x86_64/CMakeFiles/rebuild_cache.dir

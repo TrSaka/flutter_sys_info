@@ -1,0 +1,1 @@
+/Users/sakastudio/development/projects/flutter_sys_info/example/build/app/intermediates/cxx/Debug/2n3c3n4j/obj/x86_64
