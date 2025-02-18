@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_sys_info/constants/enums/enums.dart';
 import 'package:flutter_sys_info/helper/switch_memory_type.dart';
 import 'flutter_sys_info_platform_interface.dart';
@@ -27,6 +28,22 @@ class FlutterSysInfoNetwork {
 }
 
 class FlutterSysInfo {
+  static const EventChannel _batteryChannel =
+      EventChannel('battery_level_stream');
+
+  static const EventChannel _wifiRssiChannel = EventChannel('wifi_rssi_stream');
+
+  Stream<int> get batteryLevelStream {
+    return _batteryChannel
+        .receiveBroadcastStream('battery_level_stream')
+        .map((event) => event as int);
+  }
+
+  Stream<int> get wifiRssiStream {
+    return _wifiRssiChannel
+        .receiveBroadcastStream('wifi_rssi_stream')
+        .map((event) => event as int);
+  }
 
   Future<String?> getBatteryTemperature() {
     return FlutterSysInfoPlatform.instance.getBatteryTemperature();

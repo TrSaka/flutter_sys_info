@@ -28,6 +28,9 @@ class _MyAppState extends State<MyApp> {
   String? batteryTemp;
   String? cpuTemp;
 
+  Stream? batteryLevelStream;
+  Stream? wifiRssiStream;
+
   final _flutterSysInfoPlugin = FlutterSysInfo();
   final _flutterSysInfoNetwork = FlutterSysInfoNetwork();
 
@@ -72,6 +75,16 @@ class _MyAppState extends State<MyApp> {
     wifiIP = await _flutterSysInfoNetwork.getWifiIP();
     batteryTemp = await _flutterSysInfoPlugin.getBatteryTemperature();
 
+    batteryLevelStream = _flutterSysInfoPlugin.batteryLevelStream;
+    batteryLevelStream?.listen((event) {
+      debugPrint('Battery level stream: $event');
+    });
+
+    wifiRssiStream = _flutterSysInfoPlugin.wifiRssiStream;
+    wifiRssiStream?.listen((event) {
+      debugPrint('Wifi RSSI stream: $event');
+    });
+
     debugPrint('Device model: $deviceModel');
     debugPrint('SDK version: $sdkVersion');
     debugPrint('Total memory: $totalMemory');
@@ -100,6 +113,8 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              easyStream(batteryLevelStream ?? Stream.empty()),
+              easyStream(wifiRssiStream ?? Stream.empty()),
               Text('Running on: $_platformVersion\n'),
               Text("Battery : %$batteryLevel\n"),
               Text("Device model: $deviceModel\n"),
@@ -117,5 +132,16 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  StreamBuilder<dynamic> easyStream(Stream eventStream) {
+    return StreamBuilder(
+        stream: eventStream,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState != ConnectionState.active) {
+            return CircularProgressIndicator();
+          }
+          return Text(snapshot.data.toString());
+        });
   }
 }
