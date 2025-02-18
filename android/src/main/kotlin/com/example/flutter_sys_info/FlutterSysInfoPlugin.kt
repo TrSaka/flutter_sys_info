@@ -28,6 +28,7 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
   //event channel
 
   private lateinit var eventHandler: SysInfoEventHandler
+  private lateinit var methodHandler: SysInfoMethodHandler
 
   private lateinit var batteryLevelEventChannel: EventChannel
   private lateinit var wifiRssiEventChannel: EventChannel
@@ -39,6 +40,7 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
 
+    methodHandler = SysInfoMethodHandler(context)
     eventHandler = SysInfoEventHandler(context)
 
     batteryLevelEventChannel = EventChannel(flutterPluginBinding.binaryMessenger,"battery_level_stream")
@@ -51,43 +53,7 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
 
 
   override fun onMethodCall(call: MethodCall, result: Result) {
-
-    when (call.method){
-
-      //HARDWARE
-
-      "getPlatformVersion" -> HardwareInfo.getPlatformVersion(result)
-    
-      "getBatteryLevel" -> HardwareInfo.getBatteryLevel(context, result)
-
-      "getDeviceModel"-> HardwareInfo.getDeviceModel(result)
-
-      "getSdkVersion"-> HardwareInfo.getSdkVersion(result)
-
-      "getTotalMemory"-> HardwareInfo.getTotalMemory(context, result)
-
-      "getStorageInfo"-> HardwareInfo.getStorageInfo(context, result)
-
-      "getBatteryTemperature"-> HardwareInfo.getBatteryTemperature(context,result)
-
-
-      //NETWORK
-
-      "getWifiSSID"-> NetworkInfo.getWifiSSID(context, result)
-      
-      "getWifiBSSID"-> NetworkInfo.getWifiBSSID(context, result)
-      
-      "getWifiNetworkSpeed"-> NetworkInfo.getWifiNetworkSpeed(context, result)
-      
-      "getWifiIP"-> NetworkInfo.getWifiIP(context, result)
-      
-      "getWifiRSSI"-> NetworkInfo.getWifiRSSI(context, result)
-      
-
-      else -> {
-        result.notImplemented()
-      }
-    }
+    methodHandler.handleMethodCall(call,result)
   }
 
 
