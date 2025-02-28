@@ -8,6 +8,9 @@ import android.net.NetworkInfo
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 
+import android.os.Handler
+import android.os.Looper
+
 
 import io.flutter.plugin.common.EventChannel
 import android.content.BroadcastReceiver
@@ -15,135 +18,140 @@ import android.content.Intent
 import android.content.IntentFilter
 
 
-class SysInfoEventHandler(private val context:Context):EventChannel.StreamHandler{
+class SysInfoEventHandler(private val context: Context) : EventChannel.StreamHandler {
     private var batteryEventSink: EventChannel.EventSink? = null
+    private var isBatteryEventListening: Boolean = false
+    
     private var batteryTempEventSink: EventChannel.EventSink? = null
-    private var wifirRssiEventSink: EventChannel.EventSink? = null
-    private var wifiConnectionEventSink: EventChannel.EventSink? = null
+    private var isBatteryTempEventListening: Boolean = false
+    
+    private var wifiRssiEventSink: EventChannel.EventSink? = null
+    private var isWifiRssiEventListening: Boolean = false
 
-    private var isWifiConnected : Boolean = false
+    private var internetConnectionEventSink: EventChannel.EventSink? = null
+    private var isInternetAvailableEventListening: Boolean = false
     private var isInternetAvailable: Boolean = false
 
-    private fun checkInternetConnection(){
+    private fun checkInternetConnection() {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
         isInternetAvailable = activeNetwork?.isConnectedOrConnecting == true
-
     }
 
 
-    private val wifiConnectionReceiver = object: BroadcastReceiver(){
-        override fun onReceive(context:Context, intent:Intent?){
-            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val wifiInfo = wifiManager?.connectionInfo
-            isWifiConnected = wifiInfo?.networkId != -1
-
+    private val internetAvailableReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+            // İnternet bağlantısını kontrol et
             checkInternetConnection()
-            wifiConnectionEventSink?.success(isWifiConnected &&isInternetAvailable)
             
+            // İnternet durumu güncellenmiş olarak EventSink'e gönder
+            internetConnectionEventSink?.success(isInternetAvailable)
         }
     }
 
-    private val internetAvailableReceiver = object: BroadcastReceiver(){
-        override fun onReceive(context:Context, intent:Intent?){
-            checkInternetConnection()
-            wifiConnectionEventSink?.success(isWifiConnected &&isInternetAvailable)
-        }
-    }
-    
-    private val wifiRssiStatusReceiver = object: BroadcastReceiver(){
-        override fun onReceive(context:Context, intent:Intent?){
+    private val wifiRssiStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
             val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val wifiInfo = wifiManager?.connectionInfo
-            wifirRssiEventSink?.success(wifiInfo?.rssi)
+            val wifiInfo = wifiManager.connectionInfo
+            wifiRssiEventSink?.success(wifiInfo?.rssi)
         }
     }
 
-
-    private val batteryStatusReceiver = object: BroadcastReceiver(){
-        override fun onReceive(context:Context, intent:Intent?){
-            val batteryLevel = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL,-1)
+    private val batteryStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+            val batteryLevel = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             batteryEventSink?.success(batteryLevel)
         }
     }
 
-    private val batteryTempReceiver = object: BroadcastReceiver(){
-        override fun onReceive(context:Context, intent:Intent?){
-            val batteryTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,-1)
-            
-            if(batteryTemp != null && batteryTemp != -1){
-                batteryTempEventSink?.success(batteryTemp/10.0)
-            }else{
-                batteryTempEventSink?.error("UNAVAILABLE","Battery temperature is unavailable",null)
+    private val batteryTempReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+            val batteryTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+            if (batteryTemp != null && batteryTemp != -1) {
+                batteryTempEventSink?.success(batteryTemp / 10.0)
+            } else {
+                batteryTempEventSink?.error("UNAVAILABLE", "Battery temperature is unavailable", null)
             }
         }
     }
 
-    override fun onListen(arguments: Any?, events: EventChannel.EventSink?){
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         val argumentString = arguments as? String
+        println("Received argument: $argumentString")
 
-        println("Received argument: $argumentString") 
-        when (arguments as? String){
+        when (arguments as? String) {
             "battery_level_stream" -> {
+                if (isBatteryEventListening) return
+                isBatteryEventListening = true
                 batteryEventSink = events
-                //intent type is ACTION_BATTERY_CHANGED
-                //this intent filter is needed to invoke our boradcast receiver when battery changed
-                //for more info: https://developer.android.com/reference/android/content/Intent.html#ACTION_BATTERY_CHANGED
-                var batteryIntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-                context.registerReceiver(batteryStatusReceiver,batteryIntentFilter)
+                val batteryIntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+                context.registerReceiver(batteryStatusReceiver, batteryIntentFilter)
             }
 
-            "wifi_rssi_stream"->{
-                wifirRssiEventSink = events
-                //intent type is RSSI_CHANGED
-                //this intent filter is needed to invoke our boradcast receiver when wifi rssi changed
-                //for more info: https://developer.android.com/reference/android/net/wifi/WifiManager.html#RSSI_CHANGED_ACTION
-                var wifiRssiIntentFilter = IntentFilter(WifiManager.RSSI_CHANGED_ACTION)
-                context.registerReceiver(wifiRssiStatusReceiver,wifiRssiIntentFilter)   
+            "wifi_rssi_stream" -> {
+                if (isWifiRssiEventListening) return
+                isWifiRssiEventListening = true
+                wifiRssiEventSink = events
+                val wifiRssiIntentFilter = IntentFilter(WifiManager.RSSI_CHANGED_ACTION)
+                context.registerReceiver(wifiRssiStatusReceiver, wifiRssiIntentFilter)
             }
-            
-            "wifi_connection_stream"->{
-                wifiConnectionEventSink = events
-                val wifiConnectionIntentFilter = IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION)
-                context.registerReceiver(wifiConnectionReceiver,wifiConnectionIntentFilter)
+
+            "internet_connection_stream" -> {
+                if (isInternetAvailableEventListening) return
+                internetConnectionEventSink = events
 
                 val wifiAvailableIntentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-                context.registerReceiver(wifiConnectionReceiver,wifiAvailableIntentFilter)
+                context.registerReceiver(internetAvailableReceiver, wifiAvailableIntentFilter)
+                isInternetAvailableEventListening = true
             }
 
-            "battery_temp_stream"->{
+            "battery_temp_stream" -> {
+                if (isBatteryTempEventListening) return
+                isBatteryTempEventListening = true
                 batteryTempEventSink = events
                 val batteryTempIntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-                context.registerReceiver(batteryTempReceiver,batteryTempIntentFilter)
+                context.registerReceiver(batteryTempReceiver, batteryTempIntentFilter)
             }
-            
+
             else -> {
-                events?.error("INVALID_ARGUMENT","Not Found",null)
+                events?.error("INVALID_ARGUMENT", "Not Found", null)
             }
         }
-
     }
-    override fun onCancel(arguments: Any?){
 
-       when (arguments as? String) {
+    override fun onCancel(arguments: Any?) {
+        val argumentString = arguments as? String
+        println("Received argument to Cancel: $argumentString")
+
+        when (arguments as? String) {
             "battery_level_stream" -> {
+                if (!isBatteryEventListening) return
+                isBatteryEventListening = false
                 batteryEventSink = null
                 context.unregisterReceiver(batteryStatusReceiver)
             }
             "wifi_rssi_stream" -> {
-                wifirRssiEventSink = null
+                if (!isWifiRssiEventListening) return
+                isWifiRssiEventListening = false
+                wifiRssiEventSink = null
                 context.unregisterReceiver(wifiRssiStatusReceiver)
             }
-            "wifi_connection_stream" -> {
-                wifiConnectionEventSink = null
-                context.unregisterReceiver(wifiConnectionReceiver)
-                context.unregisterReceiver(internetAvailableReceiver)
+            "internet_connection_stream" -> {
+                if (isInternetAvailableEventListening) {
+                    internetConnectionEventSink = null
+                    isInternetAvailableEventListening = false
+                    context.unregisterReceiver(internetAvailableReceiver)
+
+                }
             }
             "battery_temp_stream" -> {
+                if (!isBatteryTempEventListening) return
+                isBatteryTempEventListening = false
                 batteryTempEventSink = null
                 context.unregisterReceiver(batteryTempReceiver)
             }
         }
     }
 }
+
 

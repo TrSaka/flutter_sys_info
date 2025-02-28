@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_sys_info/flutter_sys_info.dart';
+import 'package:flutter_sys_info_example/stream_page.dart';
 
 //import 'package:permission_handler/permission_handler.dart';
 void main() {
@@ -15,6 +16,23 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  
+  @override
+  Widget build(BuildContext context) {
+    //Permission.location.request(); need for wifi ssid
+
+    return MaterialApp(home: MethodPage());
+  }
+}
+
+class MethodPage extends StatefulWidget {
+  const MethodPage({super.key});
+
+  @override
+  State<MethodPage> createState() => _MethodPageState();
+}
+
+class _MethodPageState extends State<MethodPage> {
   String? _platformVersion = 'Unknown';
   int? storageInfo;
   int? totalMemory;
@@ -27,12 +45,7 @@ class _MyAppState extends State<MyApp> {
   int? wifiIP;
   double? batteryTemp;
   String? cpuTemp;
-
-  Stream? batteryLevelStream;
-  Stream? batteryTemperatureStream;
-  Stream? wifiRssiStream;
-  Stream? wifiConnectionStream;
-
+  
   final _flutterSysInfoPlugin = FlutterSysInfo();
   final _flutterSysInfoNetwork = FlutterSysInfoNetwork();
 
@@ -44,6 +57,7 @@ class _MyAppState extends State<MyApp> {
     getBatteryLevel();
     getInfos();
   }
+
 
   Future<void> initPlatformState() async {
     _platformVersion = await _flutterSysInfoPlugin.getPlatformVersion() ??
@@ -77,27 +91,6 @@ class _MyAppState extends State<MyApp> {
     wifiIP = await _flutterSysInfoNetwork.getWifiIP();
     batteryTemp = await _flutterSysInfoPlugin.getBatteryTemperature();
 
-    batteryLevelStream = _flutterSysInfoPlugin.batteryLevelStream;
-    batteryLevelStream?.listen((event) {
-      debugPrint('Battery level stream: $event');
-    });
-
-    batteryTemperatureStream = _flutterSysInfoPlugin.batteryTemperatureStream;
-    batteryTemperatureStream?.listen((event) {
-      debugPrint('Battery temperature stream: $event');
-    });
-
-    wifiRssiStream = _flutterSysInfoPlugin.wifiRssiStream;
-    wifiRssiStream?.listen((event) {
-      debugPrint('Wifi RSSI stream: $event');
-    });
-
-    wifiConnectionStream = _flutterSysInfoPlugin.wifiConnectionStream;
-    wifiConnectionStream?.listen((event) {
-      debugPrint('Wifi connection stream: $event');
-    });
-
-
     debugPrint('Device model: $deviceModel');
     debugPrint('SDK version: $sdkVersion');
     debugPrint('Total memory: $totalMemory');
@@ -114,54 +107,47 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    //Permission.location.request(); need for wifi ssid
-
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              easyStream(batteryLevelStream ?? Stream.empty(),
-                  "Battery level stream: "),
-              easyStream(
-                  wifiRssiStream ?? Stream.empty(), "Wifi RSSI stream: "),
-              easyStream(wifiConnectionStream ?? Stream.empty(),
-                  "Wifi Connection Stream: "),
-              easyStream(batteryTemperatureStream ?? Stream.empty(),
-                  "Battery temperature stream: "),
-                  
-              Text('Running on: $_platformVersion\n'),
-              Text("Battery : %$batteryLevel\n"),
-              Text("Device model: $deviceModel\n"),
-              Text("SDK version: $sdkVersion\n"),
-              Text("Total memory: $totalMemory\n"),
-              Text("Storage info: $storageInfo\n"),
-              Text("Wifi SSID: $wifiSSID\n"),
-              Text("Wifi BSSID: $wifiBSSID\n"),
-              Text("Wifi network speed: $wifiNetworkSpeed\n"),
-              Text("Wifi RSSI: $wifiRSSI\n"),
-              Text("Wifi IP: $wifiIP\n"),
-              Text("Battery temperature: $batteryTemp\n"),
-            ],
-          ),
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Scaffold'dan gelen context'i kullan
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation1, animation2) =>
+                  const StreamPage(),
+              transitionDuration: const Duration(seconds: 1),
+            ),
+          );
+        },
+        child: const Icon(Icons.arrow_forward_outlined),
+      ),
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('Running on: $_platformVersion\n'),
+            Text("Battery : %$batteryLevel\n"),
+            Text("Device model: $deviceModel\n"),
+            Text("SDK version: $sdkVersion\n"),
+            Text("Total memory: $totalMemory\n"),
+            Text("Storage info: $storageInfo\n"),
+            Text("Wifi SSID: $wifiSSID\n"),
+            Text("Wifi BSSID: $wifiBSSID\n"),
+            Text("Wifi network speed: $wifiNetworkSpeed\n"),
+            Text("Wifi RSSI: $wifiRSSI\n"),
+            Text("Wifi IP: $wifiIP\n"),
+            Text("Battery temperature: $batteryTemp\n"),
+          ],
         ),
       ),
     );
   }
-
-  StreamBuilder<dynamic> easyStream(Stream eventStream, String label) {
-    return StreamBuilder(
-        stream: eventStream,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState != ConnectionState.active) {
-            return CircularProgressIndicator();
-          }
-          return Text("$label ${snapshot.data}");
-        });
-  }
 }
+
+  
+

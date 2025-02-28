@@ -33,7 +33,7 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var batteryLevelEventChannel: EventChannel
   private lateinit var batteryTempEventChannel: EventChannel
   private lateinit var wifiRssiEventChannel: EventChannel
-  private lateinit var wifiConnectionChannel: EventChannel
+  private lateinit var internetConnectionStream: EventChannel
   
 
 
@@ -54,8 +54,8 @@ class FlutterSysInfoPlugin: FlutterPlugin, MethodCallHandler {
     wifiRssiEventChannel = EventChannel(flutterPluginBinding.binaryMessenger,"wifi_rssi_stream")
     wifiRssiEventChannel.setStreamHandler(eventHandler)
 
-    wifiConnectionChannel = EventChannel(flutterPluginBinding.binaryMessenger,"wifi_connection_stream")
-    wifiConnectionChannel.setStreamHandler(eventHandler)
+    internetConnectionStream = EventChannel(flutterPluginBinding.binaryMessenger,"internet_connection_stream")
+    internetConnectionStream.setStreamHandler(eventHandler)
 
   }
 
