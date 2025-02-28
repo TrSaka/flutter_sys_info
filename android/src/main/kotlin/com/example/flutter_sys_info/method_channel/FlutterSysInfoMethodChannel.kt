@@ -10,7 +10,9 @@ class SysInfoMethodHandler(private val context: Context){
     fun handleMethodCall(call:MethodCall, result:Result){
         when (call.method){
 
-        //HARDWARE
+        //HARDWARE part of the plugin
+        //Hardware part contains methods to get information
+        //about the device properties like battery level, device model etc.
 
         "getPlatformVersion" -> HardwareInfo.getPlatformVersion(result)
         
@@ -28,6 +30,8 @@ class SysInfoMethodHandler(private val context: Context){
 
 
         //NETWORK
+        //Network part contains methods to get information
+        //about the network properties like wifi ssid, wifi ip etc.
 
         "getWifiSSID"-> NetworkInfo.getWifiSSID(context, result)
         
